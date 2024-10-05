@@ -103,5 +103,10 @@ class Assignment(db.Model):
     # Foreign key to store the project id
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
 
+    __table_args__ = (db.UniqueConstraint('employee_id',
+                                          'project_id',
+                                          'role',
+                                          name='uq_employee_project_role'), )
+
     def __repr__(self):
         return f'<Assignment {self.id}, {self.role}, {self.start_date}, {self.end_date}, {self.employee.name}, {self.project.title}>'
