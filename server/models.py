@@ -31,9 +31,21 @@ class Employee(db.Model):
     name = db.Column(db.String)
     hire_date = db.Column(db.Date)
 
+    # Relationship mapping the employee to the related meetings
     meetings = db.relationship('Meeting',
                                back_populates='employees',
                                secondary=employees_meetings)
+
+    # Relationship mapping the employee to the related assignments
+    assignments = db.relationship('Assignment',
+                                  backref='employee',
+                                  cascade='all, delete-orphan')
+
+    # Association proxy to get projects for this employee through assignments
+    projects = association_proxy(
+        'assignments',
+        'project',
+        creator=lambda project_obj: Assignment(project=project_obj))
 
     def __repr__(self):
         return f'<Employee {self.id}, {self.name}, {self.hire_date}>'
@@ -62,5 +74,34 @@ class Project(db.Model):
     title = db.Column(db.String)
     budget = db.Column(db.Integer)
 
+    # Relationship mapping the project to the related assignments
+    assignments = db.relationship('Assignment',
+                                  backref='project',
+                                  cascade='all, delete-orphan')
+
+    # Association proxy to get employees for this project through assigments
+    employees = association_proxy(
+        'assignments',
+        'employee',
+        creator=lambda employee_obj: Assignment(employee=employee_obj))
+
     def __repr__(self):
-        return f'<Review {self.id}, {self.title}, {self.budget}>'
+        return f'<Project {self.id}, {self.title}, {self.budget}>'
+
+
+# Association Model to store many-to-many relationship between employee and project
+class Assignment(db.Model):
+    __tablename__ = 'assignments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    role = db.Column(db.String)
+    start_date = db.Column(db.DateTime)
+    end_date = db.Column(db.DateTime)
+
+    # Foreign key to store the employee id
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'))
+    # Foreign key to store the project id
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
+
+    def __repr__(self):
+        return f'<Assignment {self.id}, {self.role}, {self.start_date}, {self.end_date}, {self.employee.name}, {self.project.title}>'
